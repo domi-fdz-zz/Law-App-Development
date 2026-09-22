@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Compliance Clearance Agent · 合规预清关助手</title>
+<style>
+/* ─────────────── 主题变量（浅/深自动） ─────────────── */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#fafbfc; --ink:#1f2937; --ink-soft:#6b7280;
+  --ink-faint:#9ca3af; --line:#e5e7eb; --line-soft:#eef0f2; --brand:#2563eb; --brand-ink:#1d4ed8;
+  --input-bg:#ffffff; --input-line:#d7dbe0; --ai-bg:#fff7d6; --ai-line:#e6b800;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  --code-bg:#f3f4f6; --link:#2563eb;
+  --c-green:#16a34a; --c-blue:#2563eb; --c-orange:#ea580c; --c-red:#dc2626;
+  --c-darkred:#991b1b; --c-gray:#6b7280; --c-amber:#b45309;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1c2029; --ink:#e6e8eb; --ink-soft:#a3aab5;
+    --ink-faint:#727a86; --line:#2a2f3a; --line-soft:#232833; --brand:#3b82f6; --brand-ink:#60a5fa;
+    --input-bg:#12151b; --input-line:#333a47; --ai-bg:#3a3413; --ai-line:#a88600;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+    --code-bg:#1e232c; --link:#60a5fa;
+    --c-green:#22c55e; --c-blue:#3b82f6; --c-orange:#f97316; --c-red:#ef4444;
+    --c-darkred:#dc2626; --c-gray:#8b93a1; --c-amber:#d97706;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",
+    "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.55;
+  overflow-x:hidden;
+}
+a{color:var(--link)}
+.wrap{max-width:1080px; margin:0 auto; padding:0 20px 80px}
+
+/* ─────────────── 顶栏 ─────────────── */
+header{
+  position:sticky; top:0; z-index:20; background:var(--panel);
+  border-bottom:1px solid var(--line); box-shadow:0 1px 0 rgba(0,0,0,.02);
+}
+.hd{max-width:1080px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:12px}
+.logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;
+  background:linear-gradient(160deg,#2563eb,#1e40af); color:#fff; font-weight:700; font-size:17px}
+.hd h1{font-size:15.5px; margin:0; font-weight:650; letter-spacing:-.01em}
+.hd .sub{font-size:12px; color:var(--ink-soft); margin-top:1px}
+.hd-spacer{flex:1}
+.icon-btn{
+  display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:13px;
+  padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2);
+  color:var(--ink); transition:background .12s,border-color .12s;
+}
+.icon-btn:hover{background:var(--bg); border-color:var(--ink-faint)}
+.pill-ok{font-size:11px; color:var(--c-green); border:1px solid var(--line); border-radius:999px; padding:3px 9px}
+
+/* ─────────────── 卡片/分区 ─────────────── */
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  padding:18px 20px; margin-top:18px; box-shadow:var(--shadow);
+}
+.card > h2{font-size:15px; margin:0 0 3px; font-weight:650; display:flex; align-items:center; gap:8px}
+.card > .hint{font-size:12.5px; color:var(--ink-soft); margin:0 0 14px}
+.step-badge{width:22px;height:22px;border-radius:50%;flex:0 0 auto;display:inline-grid;
+  place-items:center;font-size:12px;font-weight:700;background:var(--brand);color:#fff}
+
+/* ─────────────── 表单控件 ─────────────── */
+label.fl{display:block; font-size:11px; font-weight:600; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--ink-soft); margin:0 0 5px}
+label.fl .en{color:var(--ink-faint); font-weight:500; text-transform:none; letter-spacing:0}
+input[type=text],input[type=date],textarea,select{
+  width:100%; font:inherit; font-size:13.5px; color:var(--ink);
+  background:var(--input-bg); border:1px solid var(--input-line); border-radius:9px;
+  padding:9px 11px; outline:none; transition:border-color .12s,box-shadow .12s;
+}
+textarea{resize:vertical; line-height:1.55}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--brand); box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent);
+}
+select{appearance:none; -webkit-appearance:none; background-image:
+  linear-gradient(45deg,transparent 50%,var(--ink-faint) 50%),
+  linear-gradient(135deg,var(--ink-faint) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
+  background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:30px}
+.field{margin-bottom:12px}
+.field.ai-filled input,.field.ai-filled select,.field.ai-filled textarea{
+  background:var(--ai-bg); border-left:3px solid var(--ai-line);
+}
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0 18px}
+
+/* 分组（六维度） */
+.group{border:1px solid var(--line); border-radius:11px; padding:14px 15px 4px; margin-top:12px; background:var(--panel-2)}
+.group > .gh{font-size:12.5px; font-weight:650; margin:0 0 10px; display:flex; align-items:center; gap:7px}
+.group > .gh .en{color:var(--ink-faint); font-weight:500; font-size:11.5px}
+.dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:var(--brand)}
+
+/* 按钮 */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+  font:inherit; font-size:14px; font-weight:600; border-radius:10px; padding:11px 20px;
+  border:1px solid transparent; transition:filter .12s,background .12s,opacity .12s;
+}
+.btn-primary{background:var(--brand); color:#fff}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-lg{width:100%; padding:14px; font-size:15px}
+.btn-ghost{background:var(--panel-2); color:var(--ink); border-color:var(--line)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-sm{padding:7px 13px; font-size:12.5px; font-weight:600}
+.btn:disabled{opacity:.55; cursor:not-allowed; filter:none}
+.row-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px}
+
+/* ─────────────── 提示条 ─────────────── */
+.banner{border-radius:10px; padding:11px 13px; font-size:13px; margin-top:12px; border:1px solid var(--line)}
+.banner .bt{font-weight:650; margin-bottom:2px}
+.banner-info{background:color-mix(in srgb,var(--c-blue) 10%,var(--panel)); border-color:color-mix(in srgb,var(--c-blue) 35%,var(--line))}
+.banner-warn{background:color-mix(in srgb,var(--c-orange) 12%,var(--panel)); border-color:color-mix(in srgb,var(--c-orange) 40%,var(--line))}
+.banner-err{background:color-mix(in srgb,var(--c-red) 12%,var(--panel)); border-color:color-mix(in srgb,var(--c-red) 40%,var(--line))}
+.banner ul{margin:6px 0 0; padding-left:18px}
+.banner li{margin:2px 0}
+
+/* ─────────────── 徽章 ─────────────── */
+.badge{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:650;
+  color:#fff; border-radius:999px; padding:3px 10px; line-height:1.4; white-space:nowrap}
+.badge-lg{font-size:13.5px; padding:6px 15px}
+.b-green{background:var(--c-green)} .b-blue{background:var(--c-blue)}
+.b-orange{background:var(--c-orange)} .b-red{background:var(--c-red)}
+.b-darkred{background:var(--c-darkred)} .b-gray{background:var(--c-gray)}
+.b-amber{background:var(--c-amber)}
+.badge-soft{color:var(--ink); background:var(--panel-2); border:1px solid var(--line); font-weight:600}
+
+/* ─────────────── 报告 ─────────────── */
+#report{display:none}
+.rep-hero{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:6px}
+.rep-verdict-cn{font-size:15px; font-weight:650; margin-left:2px}
+.rep-summary{font-size:14px; line-height:1.6; margin:10px 0 4px}
+.trace{font-size:11.5px; color:var(--ink-faint); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  margin-top:8px; word-break:break-all}
+.sec{margin-top:20px}
+.sec > h3{font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 9px; padding-bottom:6px; border-bottom:1px solid var(--line-soft)}
+.item{border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-bottom:9px; background:var(--panel-2)}
+.item .it-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px}
+.item .it-id{font-size:11px; color:var(--ink-faint); font-family:ui-monospace,Menlo,monospace}
+.item .it-text{font-size:13.5px}
+.item .it-sub{font-size:12px; color:var(--ink-soft); margin-top:3px}
+.item .excerpt{font-size:12.5px; color:var(--ink-soft); margin-top:6px; padding:8px 10px;
+  background:var(--code-bg); border-radius:7px; border-left:3px solid var(--line)}
+.empty-note{font-size:12.5px; color:var(--ink-faint); font-style:italic}
+.tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px}
+table{border-collapse:collapse; width:100%; font-size:13px; min-width:520px}
+th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line-soft); vertical-align:top}
+th{background:var(--panel-2); font-weight:650; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft)}
+tr:last-child td{border-bottom:none}
+.disclaimer{font-size:12px; color:var(--ink-soft); background:var(--panel-2); border:1px dashed var(--line);
+  border-radius:9px; padding:11px 13px; margin-top:20px}
+.disclaimer .dt{font-weight:650; color:var(--ink); margin-bottom:4px}
+.disclaimer ul{margin:4px 0 0; padding-left:18px}
+
+/* ─────────────── 弹窗 ─────────────── */
+.modal{position:fixed; inset:0; z-index:100; background:rgba(10,12,16,.55);
+  display:none; align-items:center; justify-content:center; padding:20px}
+.modal.open{display:flex}
+.modal-card{background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  width:100%; max-width:520px; max-height:88vh; overflow-y:auto; box-shadow:var(--shadow)}
+.modal-head{display:flex; align-items:center; gap:10px; padding:18px 20px 12px; border-bottom:1px solid var(--line-soft)}
+.modal-head h2{font-size:16px; margin:0; font-weight:650; flex:1}
+.modal-x{cursor:pointer; border:none; background:transparent; color:var(--ink-faint); font-size:22px; line-height:1; padding:2px 6px; border-radius:6px}
+.modal-x:hover{background:var(--panel-2); color:var(--ink)}
+.modal-body{padding:16px 20px 20px}
+
+/* ─────────────── 加载 ─────────────── */
+.spinner{width:16px;height:16px;border:2px solid rgba(150,150,150,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+.btn-ghost .spinner,.spinner.dark{border-top-color:var(--brand)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.muted{color:var(--ink-soft)} .mono{font-family:ui-monospace,Menlo,monospace}
+.hide{display:none !important}
+.note{font-size:12px; color:var(--ink-soft); margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="logo">§</div>
+    <div>
+      <h1>Compliance Clearance Agent</h1>
+      <div class="sub">合规预清关助手 · 规则引擎判定，AI 仅协助填表</div>
+    </div>
+    <div class="hd-spacer"></div>
+    <span class="pill-ok" id="healthPill">连接中…</span>
+    <button class="icon-btn" id="btnSettings" title="设置 LLM">⚙ 设置</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ① 自然语言输入 -->
+  <section class="card">
+    <h2><span class="step-badge">1</span> 自然语言描述场景</h2>
+    <p class="hint">用一段话描述你的场景，点「AI 生成表单」把它翻译成下方结构化表单。判断由规则引擎完成，AI 只负责填表——请务必人工核对，可直接在表单上修改。</p>
+    <textarea id="nlText" rows="5" placeholder="用一段话描述你的场景，例如：我想拿 GEO 数据集 GSE12345（人类 RNA-seq）做商业 biomarker 挖掘，数据存在美国、会跨境传输给第三方分析……"></textarea>
+    <div class="row-actions">
+      <button class="btn btn-primary" id="btnNormalize"><span id="normLabel">✨ AI 生成表单</span></button>
+      <span class="note" id="normNote">需在「设置」里配置 LLM key 才能用 AI 填表；不配也能手动填下方表单直接跑评估。</span>
+    </div>
+    <div id="normResult"></div>
+  </section>
+
+  <!-- ② 结构化表单 -->
+  <section class="card">
+    <h2><span class="step-badge">2</span> 结构化表单（六维度，可编辑）</h2>
+    <p class="hint">黄色高亮 = AI 已填，请核对。布尔字段为三态：是 / 否 / 未知（未知会触发缺失信息提示）。逗号分隔的字段会拆成数组。</p>
+    <div id="formGroups"></div>
+    <div class="row-actions" style="margin-top:16px">
+      <button class="btn btn-ghost btn-sm" id="btnRefresh">↻ 刷新路由 / 缺失信息</button>
+      <span class="note">依据当前表单重新计算命中领域包与缺失项（不会改动你填的内容）。</span>
+    </div>
+    <div id="missingBox"></div>
+    <div style="margin-top:18px">
+      <button class="btn btn-primary btn-lg" id="btnRun"><span id="runLabel">运行评估　Run Assessment</span></button>
+    </div>
+    <div id="runError"></div>
+  </section>
+
+  <!-- ③ 报告 -->
+  <section class="card" id="report">
+    <h2><span class="step-badge">3</span> 清关报告　Clearance Report</h2>
+    <div id="reportBody"></div>
+  </section>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal" id="settingsModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>⚙ LLM 设置</h2>
+      <button class="modal-x" id="btnCloseSettings">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="note" style="margin-top:0">配置 key 后才能使用「AI 生成表单」。不配置也能手动填表单跑评估——评估判断始终由本地规则引擎完成。</p>
+      <div class="field">
+        <label class="fl">Provider 提供方</label>
+        <select id="setProvider"></select>
+      </div>
+      <div class="field">
+        <label class="fl">Endpoint 接口地址</label>
+        <input type="text" id="setEndpoint" placeholder="https://api.example.com/v1" />
+      </div>
+      <div class="field">
+        <label class="fl">Model 模型</label>
+        <input type="text" id="setModel" placeholder="model-name" />
+      </div>
+      <div class="field">
+        <label class="fl">API Key 密钥</label>
+        <input type="password" id="setKey" placeholder="留空则保留现有 key" autocomplete="off" />
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-primary btn-sm" id="btnSaveSettings">保存</button>
+        <button class="btn btn-ghost btn-sm" id="btnTestConn">测试连接</button>
+      </div>
+      <div id="settingsMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const today = () => new Date().toISOString().slice(0,10);
+
+/* ═════════════ 字段注册表（驱动表单渲染 + 填充 + 组装） ═════════════ */
+const GROUPS = [
+  { key:"object", title:"对象", en:"Object" },
+  { key:"actor",  title:"主体", en:"Actor" },
+  { key:"use",    title:"用途", en:"Use Case" },
+  { key:"jur",    title:"司法辖区", en:"Jurisdiction" },
+  { key:"flow",   title:"数据流转", en:"Data Flow" },
+  { key:"time",   title:"时间", en:"Time" },
+];
+// kind: text | textarea | tristate | array | date ；empty: null(默认) | str | today
+const FIELDS = [
+  // Object
+  {g:"object", id:"f_object_type",   path:"object.object_type",           label:"对象类型", en:"object_type", kind:"text", empty:"str", ph:"如 dataset / drug / sample"},
+  {g:"object", id:"f_object_name",   path:"object.name",                  label:"名称",     en:"name",        kind:"text", ph:"如 GSE12345"},
+  {g:"object", id:"f_object_source", path:"object.source",                label:"来源",     en:"source",      kind:"text", ph:"如 GEO / NCBI"},
+  {g:"object", id:"f_organism",      path:"object.metadata.organism",     label:"物种",     en:"metadata.organism",    kind:"text", empty:"str", ph:"如 human"},
+  {g:"object", id:"f_data_type",     path:"object.metadata.data_type",    label:"数据类型", en:"metadata.data_type",   kind:"text", empty:"str", ph:"如 RNA-seq"},
+  {g:"object", id:"f_data_level",    path:"object.metadata.data_level",   label:"数据层级", en:"metadata.data_level",  kind:"text", empty:"str", ph:"如 raw / processed"},
+  {g:"object", id:"f_sample_origin", path:"object.metadata.sample_origin",label:"样本来源", en:"metadata.sample_origin",kind:"text", empty:"str", ph:"如 China / US"},
+  // Actor
+  {g:"actor", id:"f_actor_type", path:"actor.actor_type",          label:"主体类型", en:"actor_type", kind:"text", ph:"如 company / academic"},
+  {g:"actor", id:"f_country",    path:"actor.country",             label:"国家",     en:"country",    kind:"text", ph:"如 US / China"},
+  {g:"actor", id:"f_org_type",   path:"actor.organization_type",   label:"机构类型", en:"organization_type", kind:"text"},
+  {g:"actor", id:"f_role",       path:"actor.role",                label:"角色",     en:"role",       kind:"text"},
+  {g:"actor", id:"f_foreign",    path:"actor.foreign_controlled",  label:"外资控制", en:"foreign_controlled", kind:"tristate"},
+  // Use Case
+  {g:"use", id:"f_category",     path:"use_case.category",     label:"用途类别", en:"category", kind:"text", empty:"str", ph:"如 biomarker discovery"},
+  {g:"use", id:"f_uc_desc",      path:"use_case.description",  label:"用途描述", en:"description", kind:"textarea"},
+  {g:"use", id:"f_commercial",   path:"use_case.commercial",   label:"商业用途", en:"commercial",   kind:"tristate"},
+  {g:"use", id:"f_clinical",     path:"use_case.clinical",     label:"临床用途", en:"clinical",     kind:"tristate"},
+  {g:"use", id:"f_ai_training",  path:"use_case.ai_training",  label:"AI 训练",  en:"ai_training",  kind:"tristate"},
+  {g:"use", id:"f_publication",  path:"use_case.publication",  label:"发表",     en:"publication",  kind:"tristate"},
+  {g:"use", id:"f_research_only",path:"use_case.research_only",label:"仅科研",   en:"research_only",kind:"tristate"},
+  // Jurisdiction
+  {g:"jur", id:"f_countries",     path:"jurisdiction.countries",     label:"涉及国家", en:"countries", kind:"array", ph:"逗号分隔，如 US, China"},
+  {g:"jur", id:"f_regions",       path:"jurisdiction.regions",       label:"地区",     en:"regions",   kind:"array", ph:"逗号分隔，如 EU"},
+  {g:"jur", id:"f_target_market", path:"jurisdiction.target_market", label:"目标市场", en:"target_market", kind:"array", ph:"逗号分隔"},
+  {g:"jur", id:"f_analysis_level",path:"jurisdiction.analysis_level",label:"分析层级", en:"analysis_level", kind:"text"},
+  // Data Flow
+  {g:"flow", id:"f_storage",      path:"data_flow.storage_location",   label:"存储地",   en:"storage_location",    kind:"text", ph:"如 US"},
+  {g:"flow", id:"f_processing",   path:"data_flow.processing_location",label:"处理地",   en:"processing_location", kind:"text"},
+  {g:"flow", id:"f_cross_border", path:"data_flow.cross_border",       label:"跨境传输", en:"cross_border",   kind:"tristate"},
+  {g:"flow", id:"f_ext_sharing",  path:"data_flow.external_sharing",   label:"外部共享", en:"external_sharing", kind:"tristate"},
+  {g:"flow", id:"f_cloud",        path:"data_flow.cloud_processing",   label:"云端处理", en:"cloud_processing", kind:"tristate"},
+  {g:"flow", id:"f_third_parties",path:"data_flow.third_parties",      label:"第三方",   en:"third_parties",  kind:"array", ph:"逗号分隔"},
+  {g:"flow", id:"f_output_dist",  path:"data_flow.output_distribution",label:"结果分发", en:"output_distribution", kind:"array", ph:"逗号分隔"},
+  // Time
+  {g:"time", id:"f_assess_date",  path:"time.assessment_date", label:"评估日期", en:"assessment_date", kind:"date", empty:"today"},
+  {g:"time", id:"f_effective_on", path:"time.effective_on",    label:"生效日期", en:"effective_on",    kind:"date"},
+];
+
+/* ═════════════ 路径读写 ═════════════ */
+function getPath(o,p){ return p.split(".").reduce((a,k)=> (a==null?undefined:a[k]), o); }
+function setPath(o,p,v){
+  const ks=p.split("."); let cur=o;
+  for(let i=0;i<ks.length-1;i++){ if(cur[ks[i]]==null||typeof cur[ks[i]]!=="object") cur[ks[i]]={}; cur=cur[ks[i]]; }
+  cur[ks[ks.length-1]]=v;
+}
+function blankInput(){
+  return {
+    object:{object_type:"",name:null,source:null,identifiers:{},metadata:{organism:"",data_type:"",data_level:"",sample_origin:""}},
+    actor:{actor_type:null,country:null,organization_type:null,foreign_controlled:null,role:null,metadata:{}},
+    use_case:{category:"",description:null,commercial:null,clinical:null,ai_training:null,publication:null,research_only:null,metadata:{}},
+    jurisdiction:{countries:[],regions:[],target_market:[],analysis_level:null},
+    data_flow:{storage_location:null,processing_location:null,cross_border:null,external_sharing:null,cloud_processing:null,third_parties:[],output_distribution:[],metadata:{}},
+    time:{assessment_date:today(),effective_on:null},
+    query:null
+  };
+}
+
+/* ═════════════ 渲染表单 ═════════════ */
+function renderForm(){
+  const host=$("formGroups"); host.innerHTML="";
+  for(const grp of GROUPS){
+    const box=document.createElement("div"); box.className="group";
+    box.innerHTML=`<div class="gh"><span class="dot"></span>${esc(grp.title)} <span class="en">${esc(grp.en)}</span></div>`;
+    const gridEl=document.createElement("div"); gridEl.className="grid";
+    for(const f of FIELDS.filter(x=>x.g===grp.key)){
+      const wrap=document.createElement("div"); wrap.className="field"; wrap.id="wrap_"+f.id;
+      let control="";
+      const lab=`<label class="fl" for="${f.id}">${esc(f.label)} <span class="en">${esc(f.en)}</span></label>`;
+      if(f.kind==="tristate"){
+        control=`<select id="${f.id}"><option value="">未知 (unknown)</option><option value="true">是 (true)</option><option value="false">否 (false)</option></select>`;
+      } else if(f.kind==="textarea"){
+        control=`<textarea id="${f.id}" rows="2" placeholder="${esc(f.ph||"")}"></textarea>`;
+      } else if(f.kind==="date"){
+        control=`<input type="date" id="${f.id}" />`;
+      } else {
+        control=`<input type="text" id="${f.id}" placeholder="${esc(f.ph||"")}" />`;
+      }
+      // 用途描述占整行
+      if(f.kind==="textarea") wrap.style.gridColumn="1 / -1";
+      wrap.innerHTML=lab+control;
+      gridEl.appendChild(wrap);
+    }
+    box.appendChild(gridEl); host.appendChild(box);
+  }
+  $("f_assess_date").value=today();
+}
+
+/* ═════════════ 表单 <-> JSON ═════════════ */
+function fillForm(inp){
+  for(const f of FIELDS){
+    const el=$(f.id); if(!el) continue;
+    const v=getPath(inp,f.path);
+    let meaningful=false;
+    if(f.kind==="tristate"){
+      el.value = v===true?"true" : v===false?"false" : "";
+      meaningful = (v===true||v===false);
+    } else if(f.kind==="array"){
+      const arr=Array.isArray(v)?v:[];
+      el.value=arr.join(", ");
+      meaningful=arr.length>0;
+    } else {
+      el.value = (v==null)?"" : String(v);
+      meaningful = el.value.trim()!=="";
+    }
+    // metadata 默认空串不算 AI 高亮；assessment_date 默认今天不算高亮
+    if(f.empty==="today" && el.value===today()) meaningful=false;
+    $("wrap_"+f.id).classList.toggle("ai-filled", meaningful);
+  }
+}
+function collectInput(){
+  const inp=blankInput();
+  for(const f of FIELDS){
+    const el=$(f.id); if(!el) continue;
+    if(f.kind==="tristate"){
+      setPath(inp,f.path, el.value===""?null : el.value==="true");
+    } else if(f.kind==="array"){
+      setPath(inp,f.path, el.value.split(",").map(s=>s.trim()).filter(Boolean));
+    } else {
+      const v=el.value.trim();
+      if(f.empty==="str") setPath(inp,f.path, v);
+      else if(f.empty==="today") setPath(inp,f.path, v||today());
+      else setPath(inp,f.path, v===""?null:v);
+    }
+  }
+  inp.query = $("nlText").value.trim() || null;
+  return inp;
+}
+
+/* ═════════════ fetch 封装 ═════════════ */
+async function apiJSON(path, body){
+  const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.detail || (r.status+" "+r.statusText));
+  return data;
+}
+async function apiGET(path){
+  const r=await fetch(path);
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.detail || (r.status+" "+r.statusText));
+  return data;
+}
+
+/* ═════════════ 徽章工具 ═════════════ */
+const VERDICT_COLOR={allowed:"b-green",conditionally_allowed:"b-blue",requires_filing_or_approval:"b-orange",restricted_not_recommended:"b-red",insufficient_information:"b-gray"};
+const VERDICT_CN={allowed:"允许",conditionally_allowed:"有条件允许",requires_filing_or_approval:"需备案/审批",restricted_not_recommended:"受限·不建议",insufficient_information:"信息不足"};
+const LEVEL_COLOR={low:"b-green",medium:"b-orange",high:"b-red",critical:"b-darkred",unknown:"b-gray"};
+const LEVEL_CN={low:"低",medium:"中",high:"高",critical:"严重",unknown:"未知"};
+const CONF_CN={high:"高",medium:"中",low:"低"};
+function verdictBadge(v,lg){ const c=VERDICT_COLOR[v]||"b-gray"; const cn=VERDICT_CN[v]?` · ${VERDICT_CN[v]}`:"";
+  return `<span class="badge ${lg?'badge-lg':''} ${c}">${esc(v||"—")}${cn}</span>`; }
+function levelBadge(v){ const c=LEVEL_COLOR[v]||"b-gray"; const cn=LEVEL_CN[v]?`·${LEVEL_CN[v]}`:"";
+  return `<span class="badge ${c}">${esc(v||"—")}${cn}</span>`; }
+function reliabilityBadge(v){
+  if(v==="fixture_placeholder") return `<span class="badge b-amber">fixture_placeholder · 占位/示例证据</span>`;
+  return `<span class="badge badge-soft">${esc(v||"unknown")}</span>`;
+}
+
+/* ═════════════ ① 归一化提示区渲染 ═════════════ */
+function renderNormMeta(where, cands, warnings){
+  const host=$(where); let h="";
+  if(cands && cands.length){
+    const c=cands[0];
+    h+=`<div class="banner banner-info"><div class="bt">命中领域包 Domain Pack</div>
+      <span class="mono">${esc(c.domain_pack_id)}</span> · score ${esc((c.score??0).toFixed?c.score.toFixed(2):c.score)}<br>
+      <span class="muted">${esc(c.reason||"")}</span></div>`;
+  }
+  if(warnings && warnings.length){
+    h+=`<div class="banner banner-warn"><div class="bt">⚠ 提示 Warnings</div><ul>${
+      warnings.map(w=>`<li>${esc(w)}</li>`).join("")}</ul></div>`;
+  }
+  host.innerHTML=h;
+}
+function renderMissing(list){
+  const host=$("missingBox");
+  if(!list || !list.length){ host.innerHTML=`<div class="banner banner-info" style="margin-top:14px"><div class="bt">缺失信息 Missing Information</div><span class="muted">当前无缺失项。</span></div>`; return; }
+  host.innerHTML=`<div class="banner banner-warn" style="margin-top:14px"><div class="bt">缺失信息 Missing Information（${list.length}）</div>
+    <ul>${list.map(m=>`<li>${levelBadge(m.severity)} <span class="mono">${esc(m.field)}</span> — ${esc(m.message)}</li>`).join("")}</ul></div>`;
+}
+
+/* ═════════════ ③ 报告渲染 ═════════════ */
+function section(title,en,inner,emptyMsg){
+  const empty = (!inner || inner.trim()==="");
+  return `<div class="sec"><h3>${esc(title)}${en?` · ${esc(en)}`:""}</h3>${
+    empty?`<div class="empty-note">${esc(emptyMsg||"无")}</div>`:inner}</div>`;
+}
+function renderReport(r){
+  let h="";
+  // hero
+  h+=`<div class="rep-hero">${verdictBadge(r.overall_verdict,true)} ${levelBadge(r.risk_level)}
+      <span class="badge badge-soft">confidence · ${esc(CONF_CN[r.confidence]||r.confidence||"—")}</span></div>`;
+  h+=`<p class="rep-summary">${esc(r.summary||"")}</p>`;
+  h+=`<div class="trace">assessment_id: ${esc(r.assessment_id)} · domain_pack: ${esc(r.domain_pack_id)}@${esc(r.domain_pack_version)} · core ${esc(r.core_version)}</div>`;
+
+  // Conditions
+  h+=section("需满足条件","Conditions",
+    (r.conditions||[]).map(c=>`<div class="item"><div class="it-text">${esc(c.text)}</div>
+      <div class="it-id">${esc(c.condition_id||"")}</div></div>`).join(""), "无附加条件");
+
+  // Risks
+  h+=section("风险","Risks",
+    (r.risks||[]).map(x=>`<div class="item"><div class="it-head">${levelBadge(x.level)}
+      <span class="it-id">${esc(x.risk_id||"")}</span></div><div class="it-text">${esc(x.text)}</div></div>`).join(""), "未识别到风险");
+
+  // Missing info
+  h+=section("缺失信息","Missing Information",
+    (r.missing_information||[]).map(m=>`<div class="item"><div class="it-head">${levelBadge(m.severity)}
+      <span class="it-id mono">${esc(m.field)}</span></div><div class="it-text">${esc(m.message)}</div></div>`).join(""), "无缺失项");
+
+  // Triggered rules
+  h+=section("触发规则","Triggered Rules",
+    (r.triggered_rules||[]).map(t=>`<div class="item"><div class="it-head">
+      <span class="it-id mono">${esc(t.rule_id)}</span> ${verdictBadge(t.verdict)} ${levelBadge(t.risk_level)}</div>
+      <div class="it-text">${esc(t.reason)}</div></div>`).join(""), "无规则触发");
+
+  // Evidence
+  h+=section("证据","Evidence",
+    (r.evidence||[]).map(e=>{
+      const url = e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.url)}</a>`:"";
+      return `<div class="item"><div class="it-head">${reliabilityBadge(e.reliability)}
+        <span class="it-text" style="font-weight:600">${esc(e.title)}</span></div>
+        ${e.citation?`<div class="it-sub">${esc(e.citation)}</div>`:""}
+        ${url?`<div class="it-sub">${url}</div>`:""}
+        ${e.excerpt?`<div class="excerpt">${esc(e.excerpt)}</div>`:""}</div>`;
+    }).join(""), "无引用证据");
+
+  // Next actions
+  h+=section("后续动作","Next Actions",
+    (r.next_actions||[]).map(a=>`<div class="item"><div class="it-head">${levelBadge(a.priority)}
+      <span class="it-id">${esc(a.action_id||"")}</span></div><div class="it-text">${esc(a.text)}</div></div>`).join(""), "无建议动作");
+
+  // Jurisdiction matrix
+  const jm=r.jurisdiction_matrix||[];
+  const jmInner = jm.length? `<div class="tbl-wrap"><table><thead><tr>
+      <th>Jurisdiction</th><th>Verdict</th><th>Risk</th><th>Summary</th></tr></thead><tbody>${
+      jm.map(j=>`<tr><td>${esc(j.jurisdiction)}</td><td>${verdictBadge(j.verdict)}</td>
+        <td>${levelBadge(j.risk_level)}</td><td>${esc(j.summary||"")}</td></tr>`).join("")}</tbody></table></div>` : "";
+  h+=section("辖区矩阵","Jurisdiction Matrix", jmInner, "无逐辖区细分");
+
+  // Disclaimers
+  if((r.disclaimers||[]).length){
+    h+=`<div class="disclaimer"><div class="dt">免责声明 · 这不是法律意见</div>
+      <ul>${r.disclaimers.map(d=>`<li>${esc(d)}</li>`).join("")}</ul></div>`;
+  }
+  $("reportBody").innerHTML=h;
+  $("report").style.display="block";
+}
+
+/* ═════════════ 交互：AI 生成表单 ═════════════ */
+function busy(btn,labelEl,text,on){
+  btn.disabled=on;
+  labelEl.innerHTML = on ? `<span class="spinner"></span> ${esc(text)}` : text;
+}
+$("btnNormalize").addEventListener("click", async ()=>{
+  const text=$("nlText").value.trim();
+  if(!text){ $("normResult").innerHTML=`<div class="banner banner-warn">请先输入一段场景描述。</div>`; return; }
+  const btn=$("btnNormalize");
+  busy(btn,$("normLabel"),"生成中…",true);
+  $("normResult").innerHTML="";
+  try{
+    const res=await apiJSON("/api/assessments/normalize",{text});
+    fillForm(res.normalized_input);
+    renderNormMeta("normResult", res.domain_candidates, res.warnings);
+    renderMissing(res.missing_information);
+    if(res.llm_used===false && (!res.warnings||!res.warnings.length)){
+      $("normResult").insertAdjacentHTML("beforeend",
+        `<div class="banner banner-info">已生成空白表单（未调用 LLM）。请手动补充下方表单。</div>`);
+    }
+    $("formGroups").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    $("normResult").innerHTML=`<div class="banner banner-err"><div class="bt">生成失败</div>${esc(e.message)}</div>`;
+  }finally{
+    busy(btn,$("normLabel"),"✨ AI 生成表单",false);
+  }
+});
+
+/* ═════════════ 交互：刷新路由/缺失 ═════════════ */
+$("btnRefresh").addEventListener("click", async ()=>{
+  const btn=$("btnRefresh"); const old=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML=`<span class="spinner dark"></span> 刷新中…`;
+  try{
+    const res=await apiJSON("/api/assessments/normalize",{input:collectInput()});
+    renderNormMeta("normResult", res.domain_candidates, res.warnings);
+    renderMissing(res.missing_information);
+  }catch(e){
+    $("missingBox").innerHTML=`<div class="banner banner-err" style="margin-top:14px"><div class="bt">刷新失败</div>${esc(e.message)}</div>`;
+  }finally{
+    btn.disabled=false; btn.innerHTML=old;
+  }
+});
+
+/* ═════════════ 交互：运行评估 ═════════════ */
+$("btnRun").addEventListener("click", async ()=>{
+  const btn=$("btnRun");
+  busy(btn,$("runLabel"),"评估中…",true);
+  $("runError").innerHTML="";
+  try{
+    const report=await apiJSON("/api/assessments", collectInput());
+    renderReport(report);
+    $("report").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    $("runError").innerHTML=`<div class="banner banner-err"><div class="bt">评估失败</div>${esc(e.message)}</div>`;
+  }finally{
+    busy(btn,$("runLabel"),"运行评估　Run Assessment",false);
+  }
+});
+
+/* ═════════════ 设置弹窗 ═════════════ */
+let PROVIDERS=[];
+function openSettings(){ $("settingsModal").classList.add("open"); loadSettings(); }
+function closeSettings(){ $("settingsModal").classList.remove("open"); }
+$("btnSettings").addEventListener("click", openSettings);
+$("btnCloseSettings").addEventListener("click", closeSettings);
+$("settingsModal").addEventListener("click",(e)=>{ if(e.target===$("settingsModal")) closeSettings(); });
+
+async function loadSettings(){
+  $("settingsMsg").innerHTML="";
+  try{
+    const s=await apiGET("/api/settings");
+    PROVIDERS=s.providers||[];
+    const sel=$("setProvider");
+    sel.innerHTML=PROVIDERS.map(p=>`<option value="${esc(p.id)}"${p.selectable?"":" disabled"}>${esc(p.label)}</option>`).join("");
+    const b=s.backend||{};
+    if(b.provider) sel.value=b.provider;
+    $("setEndpoint").value=b.endpoint||"";
+    $("setModel").value=b.model||"";
+    $("setKey").value="";
+    $("setKey").placeholder = b.has_key ? `已配置：${b.key_hint||"••••"}（留空保留）` : "sk-…";
+  }catch(e){
+    $("settingsMsg").innerHTML=`<div class="banner banner-err">${esc(e.message)}</div>`;
+  }
+}
+// 切换 provider 时用默认值预填 endpoint/model
+$("setProvider").addEventListener("change",()=>{
+  const p=PROVIDERS.find(x=>x.id===$("setProvider").value);
+  if(p){ $("setEndpoint").value=p.default_endpoint||""; $("setModel").value=p.default_model||""; }
+});
+$("btnSaveSettings").addEventListener("click", async ()=>{
+  const btn=$("btnSaveSettings"); btn.disabled=true;
+  $("settingsMsg").innerHTML="";
+  try{
+    const body=new URLSearchParams();
+    body.set("provider",$("setProvider").value);
+    body.set("endpoint",$("setEndpoint").value.trim());
+    body.set("model",$("setModel").value.trim());
+    body.set("api_key",$("setKey").value);   // 留空则后端保留原 key
+    const r=await fetch("/api/settings",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.detail||r.statusText);
+    $("settingsMsg").innerHTML=`<div class="banner banner-info">已保存。</div>`;
+    const b=data.backend||{};
+    $("setKey").value=""; $("setKey").placeholder=b.has_key?`已配置：${b.key_hint||"••••"}（留空保留）`:"sk-…";
+    refreshNormNote(b.has_key);
+  }catch(e){
+    $("settingsMsg").innerHTML=`<div class="banner banner-err">${esc(e.message)}</div>`;
+  }finally{ btn.disabled=false; }
+});
+$("btnTestConn").addEventListener("click", async ()=>{
+  const btn=$("btnTestConn"); const old=btn.innerHTML;
+  btn.disabled=true; btn.innerHTML=`<span class="spinner dark"></span> 测试中…`;
+  $("settingsMsg").innerHTML="";
+  try{
+    const r=await apiJSON("/api/test_connection",{});
+    if(r.ok){
+      $("settingsMsg").innerHTML=`<div class="banner banner-info"><div class="bt">✓ 连接成功</div>
+        <span class="mono">${esc(r.model)}</span> @ <span class="mono">${esc(r.endpoint)}</span><br>
+        返回样本：${esc(r.sample||"")}</div>`;
+    }else{
+      $("settingsMsg").innerHTML=`<div class="banner banner-err"><div class="bt">✗ 连接失败</div>${esc(r.error||"")}</div>`;
+    }
+  }catch(e){
+    $("settingsMsg").innerHTML=`<div class="banner banner-err">${esc(e.message)}</div>`;
+  }finally{ btn.disabled=false; btn.innerHTML=old; }
+});
+function refreshNormNote(hasKey){
+  $("normNote").textContent = hasKey
+    ? "已配置 LLM key，可使用 AI 填表。判断仍由本地规则引擎完成。"
+    : "需在「设置」里配置 LLM key 才能用 AI 填表；不配也能手动填下方表单直接跑评估。";
+}
+
+/* ═════════════ 启动 ═════════════ */
+(async function init(){
+  renderForm();
+  try{
+    const h=await apiGET("/health");
+    $("healthPill").textContent=`● ok · core ${h.core_version}`;
+  }catch(e){ $("healthPill").textContent="● 后端未连接"; }
+  try{
+    const s=await apiGET("/api/settings");
+    refreshNormNote(!!(s.backend&&s.backend.has_key));
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

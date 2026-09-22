@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.memsearch/
+.DS_Store
+.venv/
+venv/
+build/
+dist/
+*.spec
+.env

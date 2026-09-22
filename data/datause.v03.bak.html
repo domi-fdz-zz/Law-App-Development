@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>数据可用性检查 · Data-Use Check</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#ffffff; --surf2:#f3f5f9; --inset:#eef1f6;
+    --ink:#111827; --ink2:#586074; --ink3:#8b93a4; --line:#e5e8ef;
+    --brand:#4f46e5; --brand2:#4338ca; --brand-ink:#4f46e5;
+    --good-fg:#0f7d59; --good-bg:#e9f7f0; --good-bd:#bce8d5;
+    --caut-fg:#9a6a12; --caut-bg:#fbf3df; --caut-bd:#f0dca8;
+    --warn-fg:#b5560e; --warn-bg:#fdf0e5; --warn-bd:#f6cfa8;
+    --crit-fg:#c23934; --crit-bg:#fdeceb; --crit-bd:#f4c4c1;
+    --neut-fg:#586074; --neut-bg:#eef1f6; --neut-bd:#dbe0ea;
+    --sh:0 1px 2px rgba(17,24,39,.04),0 8px 24px rgba(17,24,39,.05);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0b0f17; --surface:#131a26; --surf2:#1a2230; --inset:#1c2735;
+    --ink:#e8ecf4; --ink2:#a3adbf; --ink3:#6b7789; --line:#26303f;
+    --brand:#7c8cff; --brand2:#93a0ff; --brand-ink:#a6b0ff;
+    --good-fg:#4ecb9c; --good-bg:#123027; --good-bd:#1e4c3c;
+    --caut-fg:#e0b364; --caut-bg:#31280f; --caut-bd:#4d3d18;
+    --warn-fg:#f0955a; --warn-bg:#331f10; --warn-bd:#513117;
+    --crit-fg:#f0817a; --crit-bg:#331a19; --crit-bd:#54282a;
+    --neut-fg:#9aa4b6; --neut-bg:#1c2531; --neut-bd:#2b3543;
+    --sh:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="light"]{--bg:#f5f6f8;--surface:#fff;--surf2:#f3f5f9;--inset:#eef1f6;--ink:#111827;--ink2:#586074;--ink3:#8b93a4;--line:#e5e8ef;--brand:#4f46e5;--brand2:#4338ca;--brand-ink:#4f46e5;--good-fg:#0f7d59;--good-bg:#e9f7f0;--good-bd:#bce8d5;--caut-fg:#9a6a12;--caut-bg:#fbf3df;--caut-bd:#f0dca8;--warn-fg:#b5560e;--warn-bg:#fdf0e5;--warn-bd:#f6cfa8;--crit-fg:#c23934;--crit-bg:#fdeceb;--crit-bd:#f4c4c1;--neut-fg:#586074;--neut-bg:#eef1f6;--neut-bd:#dbe0ea;--sh:0 1px 2px rgba(17,24,39,.04),0 8px 24px rgba(17,24,39,.05);}
+  :root[data-theme="dark"]{--bg:#0b0f17;--surface:#131a26;--surf2:#1a2230;--inset:#1c2735;--ink:#e8ecf4;--ink2:#a3adbf;--ink3:#6b7789;--line:#26303f;--brand:#7c8cff;--brand2:#93a0ff;--brand-ink:#a6b0ff;--good-fg:#4ecb9c;--good-bg:#123027;--good-bd:#1e4c3c;--caut-fg:#e0b364;--caut-bg:#31280f;--caut-bd:#4d3d18;--warn-fg:#f0955a;--warn-bg:#331f10;--warn-bd:#513117;--crit-fg:#f0817a;--crit-bg:#331a19;--crit-bd:#54282a;--neut-fg:#9aa4b6;--neut-bg:#1c2531;--neut-bd:#2b3543;--sh:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);}
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.62}
+  a{color:var(--brand-ink);text-decoration:none} a:hover{text-decoration:underline}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+
+  header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--surface) 88%,transparent);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .hbar{max-width:780px;margin:0 auto;display:flex;align-items:center;gap:13px;padding:14px 20px}
+  .mark{width:36px;height:36px;flex:none;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:18px;
+    color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+  .brand h1{margin:0;font-size:15px;font-weight:650} .brand p{margin:1px 0 0;font-size:12px;color:var(--ink3)}
+  .grow{flex:1}
+  .chip{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:9px;cursor:pointer;
+    font-size:12.5px;color:var(--ink2);background:var(--surface);border:1px solid var(--line)}
+  .chip:hover{border-color:var(--ink3)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ink3)}
+
+  main{max-width:780px;margin:0 auto;padding:24px 20px 96px}
+  .stack{display:flex;flex-direction:column;gap:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:22px}
+  .eyebrow{margin:0 0 14px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink3)}
+  h2.q{margin:0 0 4px;font-size:21px;font-weight:650} .sub{margin:0;color:var(--ink2);font-size:14.5px}
+
+  textarea{width:100%;min-height:132px;resize:vertical;margin-top:14px;font:inherit;line-height:1.6;
+    background:var(--surf2);color:var(--ink);border:1px solid var(--line);border-radius:11px;padding:14px 15px}
+  textarea:focus{outline:none;border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
+  .btn{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:15px;font-weight:600;cursor:pointer}
+  .btn:hover{background:var(--brand2)} .btn:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+  .hint{color:var(--ink3);font-size:12.5px;flex:1;min-width:210px}
+
+  .load{display:flex;gap:13px;align-items:flex-start}
+  .spin{width:20px;height:20px;flex:none;margin-top:2px;border-radius:50%;border:2.5px solid var(--inset);border-top-color:var(--brand);animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}} @media(prefers-reduced-motion){.spin{animation:none}}
+
+  /* verdict panels — tinted by tone (the visual star) */
+  .vgrid{display:flex;flex-direction:column;gap:13px;margin-top:14px}
+  .vpanel{border:1px solid;border-radius:13px;padding:15px 16px}
+  .vpanel.good{background:var(--good-bg);border-color:var(--good-bd)}
+  .vpanel.caution{background:var(--caut-bg);border-color:var(--caut-bd)}
+  .vpanel.warn{background:var(--warn-bg);border-color:var(--warn-bd)}
+  .vpanel.crit{background:var(--crit-bg);border-color:var(--crit-bd)}
+  .vpanel.neutral{background:var(--neut-bg);border-color:var(--neut-bd)}
+  .vtop{display:flex;align-items:center;gap:11px}
+  .vic{font-size:20px;line-height:1;flex:none}
+  .vname{font-weight:650;font-size:15px;flex:1;min-width:0}
+  .pill{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;padding:3px 12px;border-radius:999px;white-space:nowrap}
+  .pill.good{color:var(--good-fg);background:color-mix(in srgb,var(--good-fg) 14%,transparent)}
+  .pill.caution{color:var(--caut-fg);background:color-mix(in srgb,var(--caut-fg) 15%,transparent)}
+  .pill.warn{color:var(--warn-fg);background:color-mix(in srgb,var(--warn-fg) 15%,transparent)}
+  .pill.crit{color:var(--crit-fg);background:color-mix(in srgb,var(--crit-fg) 14%,transparent)}
+  .pill.neutral{color:var(--neut-fg);background:color-mix(in srgb,var(--neut-fg) 14%,transparent)}
+  .vline{margin:8px 0 0;font-size:13.5px;color:var(--ink2)}
+  .vmeta{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+  .vm{display:flex;gap:9px;font-size:13.5px;line-height:1.5}
+  .vmk{flex:none;width:46px;font-size:12px;font-weight:700;color:var(--ink3);margin-top:1px}
+  .vm.have .vmk{color:var(--good-fg)}
+  .vm span:last-child{color:var(--ink)}
+
+  ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+  ul.list li{display:flex;gap:11px;font-size:14.5px;line-height:1.55}
+  ul.list li .ld{flex:none;width:18px;text-align:center;color:var(--ink3);margin-top:1px}
+
+  details.card>summary,details.mini>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink2)}
+  details>summary::-webkit-details-marker{display:none}
+  details.card>summary{font-size:14px}
+  .chev{transition:transform .15s ease;color:var(--ink3)} details[open]>summary .chev{transform:rotate(90deg)}
+  .dbody{margin-top:16px;display:flex;flex-direction:column;gap:18px}
+  .facts{background:var(--inset);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--ink2);line-height:1.75;word-break:break-word}
+  .lrow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+  .lrow:first-child{border-top:none} .lrow .lr2{color:var(--ink3);font-size:12.5px;margin-top:2px}
+  .obl{padding:12px 0;border-top:1px solid var(--line)} .obl:first-child{border-top:none}
+  .cite{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  .quote{margin-top:6px;padding-left:11px;border-left:2px solid var(--line);font-size:12.5px;font-style:italic;color:var(--ink2)}
+  .metaline{margin-top:6px;font-size:12.5px;color:var(--ink3);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  details.mini{border:1px solid var(--line);border-radius:12px;padding:14px}
+  .tbl-wrap{overflow-x:auto}
+
+  .chat .msgs{display:flex;flex-direction:column;gap:12px;margin:4px 0 14px}
+  .msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14.5px;line-height:1.62;white-space:pre-wrap;word-break:break-word}
+  .msg.user{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+  .msg.ai{align-self:flex-start;background:var(--surf2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.think{color:var(--ink3);font-style:italic}
+  .chatrow{display:flex;gap:10px;align-items:flex-end}
+  .chatrow textarea{margin:0;min-height:46px;max-height:150px}
+  .chatrow .btn{flex:none;padding:11px 17px}
+
+  .foot{margin-top:26px;text-align:center;color:var(--ink3);font-size:12px;line-height:1.7}
+  .foot p{margin:6px 0}
+
+  .modal{position:fixed;inset:0;z-index:50;display:none;place-items:center;padding:20px;background:rgba(10,14,22,.55);backdrop-filter:blur(3px)}
+  .modal.on{display:grid}
+  .panel{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--sh)}
+  .panel h3{margin:0 0 4px;font-size:16px}
+  .panel label{display:block;margin:14px 0 5px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+  .panel input,.panel select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surf2);color:var(--ink);font:inherit}
+  .acts{display:flex;gap:10px;margin-top:18px;align-items:center}
+  .btn.ghost{background:transparent;color:var(--ink2);border:1px solid var(--line)} .btn.ghost:hover{border-color:var(--ink3);background:transparent}
+  .err{color:var(--crit-fg);font-size:13.5px}
+</style>
+</head>
+<body>
+
+<header><div class="hbar">
+  <div class="mark">§</div>
+  <div class="brand"><h1>数据可用性检查</h1><p>这份数据我能不能用 · 美国隐私合规 · <span style="color:var(--brand-ink)">v0.3 本地版</span></p></div>
+  <div class="grow"></div>
+  <button class="chip" id="health"><span class="dot" id="hdot"></span><span id="hlabel">连接中</span></button>
+  <button class="chip" id="themeBtn" title="切换深浅色" style="padding:0 11px">◐</button>
+  <button class="chip" id="setBtn">设置</button>
+</div></header>
+
+<main>
+  <div class="stack" id="app">
+    <section class="card">
+      <p class="eyebrow">开始</p>
+      <h2 class="q">描述一下你的情况</h2>
+      <p class="sub">你有个什么数据、哪来的、里面是什么、准备用来做研究还是商业。用大白话写就行。</p>
+      <textarea id="scenario" placeholder="例如：我从公开数据库下载了一个去标识化的人类基因表达数据集，想用在博士论文里，将来也许做个商业产品。数据集没写清楚使用许可。"></textarea>
+      <div class="row">
+        <button class="btn" id="runBtn">开始检查</button>
+        <span class="hint">系统会调用 AI 逐条核对法条，通常需要 30–90 秒，请不要重复点击。</span>
+      </div>
+    </section>
+    <div class="stack" id="result"></div>
+  </div>
+  <div class="foot" id="foot" hidden></div>
+</main>
+
+<div class="modal" id="modal"><div class="panel">
+  <h3>LLM 设置</h3>
+  <p class="sub" style="font-size:13px">用来把你的描述抽成事实、并逐条取证。已配置即可直接使用。</p>
+  <label>Provider</label><select id="sProvider"></select>
+  <label>Endpoint</label><input id="sEndpoint" placeholder="https://api.deepseek.com/v1" />
+  <label>Model</label><input id="sModel" placeholder="deepseek-chat" />
+  <label>API Key</label><input id="sKey" type="password" placeholder="留空则保留已保存的 key" />
+  <div id="sMsg" style="margin-top:12px;font-size:12.5px;color:var(--ink3)"></div>
+  <div class="acts">
+    <button class="btn" id="sSave">保存</button>
+    <button class="btn ghost" id="sTest">测试连接</button>
+    <div class="grow"></div>
+    <button class="btn ghost" id="sClose">关闭</button>
+  </div>
+</div></div>
+
+<script>
+(function(){
+  "use strict";
+  const $=s=>document.querySelector(s);
+  const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  const pill=(tone,txt)=>'<span class="pill '+tone+'">'+esc(txt)+'</span>';
+
+  const VERDICT={
+    allowed:{pill:"可以用",tone:"good",line:"基本可以，注意引用来源、遵守使用条款。"},
+    conditionally_allowed:{pill:"有条件可以",tone:"caution",line:"满足下面列出的条件后就能用。"},
+    requires_approval:{pill:"先办手续",tone:"warn",line:"需要先拿到授权 / 审批（如许可、DUA、IRB）才能用。"},
+    restricted:{pill:"不建议",tone:"crit",line:"目前不允许这样用，需另行取得许可。"},
+    insufficient:{pill:"信息不够",tone:"neutral",line:"关键信息还不清楚，先补齐才能判断。"}
+  };
+  const PURPOSE={research:{icon:"📄",name:"用于研究 / 发论文"},commercial:{icon:"💰",name:"用于商业 / 做产品去卖"}};
+  const LAW_SHORT={ccpa:"加州等州隐私法（CCPA）",hipaa:"HIPAA",wa_mhmda:"消费者健康数据法",coppa:"COPPA（儿童）",bipa:"生物特征法（BIPA）",gina:"基因隐私（GINA）",ferpa:"FERPA（教育）",glba:"GLBA（金融）",vppa:"VPPA（视频）",common_rule:"人体研究伦理审查（IRB）"};
+  const LAW_NEED={ccpa:"落实州隐私法义务（告知 / 允许退出出售 / 支持查询删除）",hipaa:"HIPAA 授权，或 IRB 豁免 / 有限数据集 + DUA",wa_mhmda:"取得单独的 opt-in 同意",coppa:"取得可验证的家长同意",bipa:"采集生物特征前取得书面同意",gina:"符合 GINA 及州基因法限制",ferpa:"取得同意或适用研究 / 审计例外",glba:"落实 GLBA 隐私与安全要求",vppa:"取得符合 VPPA 的同意",common_rule:"向机构 IRB 提交审查（或取得豁免）"};
+  const OFF_SHORT={"no commercial grant":"缺商业使用许可","license forbids commercial use":"许可禁止商用","blocks use until access granted":"未签数据使用协议（DUA）","scraping risk":"爬取合规风险","ToS restricts use":"来源条款限制","reduces statutory exposure":"数据已去标识","does NOT remove statutes":"去标识不充分"};
+  const OFF_NEED={"no commercial grant":"取得明确的商业授权 / 许可","license forbids commercial use":"取得商业许可","blocks use until access granted":"申请访问并签署 DUA","scraping risk":"确认来源条款允许你的用法","ToS restricts use":"遵守或取得来源条款许可"};
+
+  fetch("/health").then(r=>r.json()).then(d=>{$("#hdot").style.background="var(--good-fg)";$("#hlabel").textContent="就绪 · v"+(d.core_version||"");})
+    .catch(()=>{$("#hdot").style.background="var(--crit-fg)";$("#hlabel").textContent="后端未连接";});
+
+  $("#themeBtn").onclick=()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+    document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+  };
+
+  const runBtn=$("#runBtn"),result=$("#result");
+  runBtn.onclick=run;
+  $("#scenario").addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key==="Enter")run();});
+
+  function run(){
+    const text=$("#scenario").value.trim(); if(!text){$("#scenario").focus();return;}
+    runBtn.disabled=true; result.innerHTML="";
+    const c=el("section","card");
+    c.innerHTML='<div class="load"><div class="spin"></div><div><div style="font-weight:600">正在检查……</div>'
+      +'<p class="sub" style="margin-top:4px;font-size:13.5px">① 从你的描述里<b>抽取事实</b> → ② 用规则<b>判定能不能用</b> → ③ 逐部法<b>取证并核对法条原文</b><br>这一步要调用几次 AI，通常 30–90 秒。</p></div></div>';
+    result.appendChild(c);
+    fetch("/api/datause",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})})
+      .then(async r=>{const j=await r.json();if(!r.ok)throw new Error(j.detail||("HTTP "+r.status));return j;})
+      .then(render)
+      .catch(e=>{result.innerHTML="";const x=el("section","card");x.innerHTML='<p class="err">出错了：'+esc(e.message)+'</p><p class="sub" style="margin-top:8px">如果是没配置 API key，点右上角「设置」填一个再试。</p>';result.appendChild(x);})
+      .finally(()=>{runBtn.disabled=false;});
+  }
+
+  let lastContext="",chatHistory=[];
+
+  function render(data){
+    result.innerHTML="";
+    const rep=data.report||{},facts=data.facts||{},retr=data.retrievals||[];
+    const matrix=rep.purpose_matrix||[],laws=rep.applicable_laws||[];
+
+    const hero=el("section","card"); hero.innerHTML='<p class="eyebrow">结论</p>';
+    const grid=el("div","vgrid");
+    (matrix.length?matrix:[{purpose:"research",verdict:"insufficient"},{purpose:"commercial",verdict:"insufficient"}]).forEach(m=>{
+      const meta=PURPOSE[m.purpose]||{icon:"•",name:m.purpose}, v=VERDICT[m.verdict]||VERDICT.insufficient;
+      const bl=m.because_laws||[],bc=m.because_contract||[];
+      const basis=bl.map(id=>LAW_SHORT[id]||id).concat(bc.map(k=>OFF_SHORT[k]||k));
+      const need=dedupe(bl.map(id=>LAW_NEED[id]).filter(Boolean).concat(bc.map(k=>OFF_NEED[k]).filter(Boolean)));
+      const have=positives(facts);
+      let mh='<div class="vmeta">';
+      if(basis.length) mh+=vm("依据",basis.join("、"));
+      if(need.length) mh+=vm("要满足",need.join("；")); else if(m.verdict==="allowed") mh+=vm("要满足","引用来源、遵守使用条款即可。");
+      if(have.length) mh+=vm("已具备",have.join("、"),true);
+      mh+='</div>';
+      const p=el("div","vpanel "+v.tone);
+      p.innerHTML='<div class="vtop"><span class="vic">'+meta.icon+'</span><span class="vname">'+esc(meta.name)+'</span>'+pill(v.tone,v.pill)+'</div>'
+        +'<p class="vline">'+esc(v.line)+'</p>'+mh;
+      grid.appendChild(p);
+    });
+    hero.appendChild(grid); result.appendChild(hero);
+
+    const miss=rep.missing_information||[];
+    if(miss.length){
+      const s=el("section","card"); s.innerHTML='<p class="eyebrow">你还需要先弄清楚的</p>';
+      const ul=el("ul","list"); miss.forEach(t=>ul.appendChild(el("li",null,'<span class="ld">?</span><span>'+esc(t)+'</span>'))); s.appendChild(ul); result.appendChild(s);
+    }
+
+    result.appendChild(evidence(data,facts,laws,retr));
+    lastContext=buildContext(data);
+    result.appendChild(chatCard());
+
+    const foot=$("#foot"); foot.hidden=false;
+    foot.innerHTML=(rep.disclaimers||[]).map(d=>"<p>"+esc(d)+"</p>").join("")+'<p style="opacity:.8">'+esc(rep.coverage_note||"")+"</p>";
+    hero.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  function vm(k,txt,have){return '<div class="vm'+(have?" have":"")+'"><span class="vmk">'+k+'</span><span>'+esc(txt)+'</span></div>';}
+  function positives(f){const o=[],c=f.content||{},b=f.basis||{},d=f.dataset||{};
+    if(["deidentified_hipaa_safeharbor","deidentified_expert","anonymized","aggregate"].indexOf(c.identifiability)>=0)o.push("数据已去标识化");
+    if(["approved","exempt"].indexOf(b.irb_status)>=0)o.push("已有 IRB 审批 / 豁免");
+    if(d.has_dua===true)o.push("已签数据使用协议（DUA）"); if(d.license==="permissive")o.push("许可允许使用"); return o;}
+  function dedupe(a){const s=new Set(),o=[];a.forEach(x=>{const k=String(x).trim();if(!s.has(k)){s.add(k);o.push(x);}});return o;}
+  function buildContext(data){const rep=data.report||{},ap=(rep.applicable_laws||[]).filter(l=>l.status==="applies"),ob=[];
+    (data.retrievals||[]).forEach(x=>(x.obligations||[]).forEach(o=>{if(o.verify_status==="verified")ob.push((o.citation||"")+"："+o.obligation);}));
+    const mx=(rep.purpose_matrix||[]).map(m=>((PURPOSE[m.purpose]||{}).name||m.purpose)+"="+((VERDICT[m.verdict]||{}).pill||m.verdict)).join("；");
+    return "场景事实："+(data.facts_summary||"")+"\n结论："+mx+"\n适用法律："+(ap.map(l=>l.name).join("、")||"（无）")+"\n已核实义务："+(ob.slice(0,8).join(" / ")||"（无）")+"\n仍缺信息："+((rep.missing_information||[]).join("；")||"（无）");}
+
+  function evidence(data,facts,laws,retr){
+    const d=el("details","card"); d.innerHTML='<summary><span class="chev">▸</span>查看依据与技术细节</summary>';
+    const b=el("div","dbody");
+    b.appendChild(el("div",null,'<p class="eyebrow" style="margin-bottom:8px">我们据以判断的事实（AI 抽取，可能有误）</p><div class="facts">'+esc(data.facts_summary||"")+'</div>'));
+    const lw=el("div",null,'<p class="eyebrow" style="margin-bottom:6px">涉及的法律</p>');
+    laws.forEach(l=>{const st={applies:["warn","适用"],likely_exempt:["good","很可能豁免"],need_info:["caution","信息不足"],not_applicable:["neutral","不适用"]}[l.status]||["neutral",l.status];
+      lw.appendChild(el("div","lrow",'<div style="min-width:0"><div>'+esc(l.name)+'</div><div class="lr2">'+esc(l.reason||"")+'</div></div>'+pill(st[0],st[1])));});
+    b.appendChild(lw);
+    const ver=[];retr.forEach(x=>(x.obligations||[]).forEach(o=>{if(o.verify_status==="verified")ver.push(o);}));
+    if(ver.length){const v=el("div",null,'<p class="eyebrow" style="margin-bottom:6px">核对通过的法条义务（引文已在一手法源逐字查到）</p>');const w=el("div","tbl-wrap"),bx=el("div");
+      ver.forEach(o=>{bx.appendChild(el("div","obl",'<div>'+esc(o.obligation)+'</div><div class="metaline"><span class="cite">'+esc(o.citation||"")+'</span>'
+        +(o.verify_url?' · <a href="'+esc(o.verify_url)+'" target="_blank" rel="noopener">查看法条原文 ↗</a>':'')+' · '+pill("good","已核实")+'</div>'
+        +(o.quote?'<div class="quote">“'+esc(o.quote)+'”</div>':'')));});
+      w.appendChild(bx);v.appendChild(w);b.appendChild(v);}
+    if(retr.some(x=>(x.reasoning||"").trim()||(x.obligations||[]).length)){
+      const sub=el("details","mini");sub.innerHTML='<summary><span class="chev">▸</span>模型推理过程与完整校验记录（供审计）</summary>';const sb=el("div","dbody");
+      retr.forEach(x=>{const h=el("div");h.innerHTML='<div style="font-weight:600;font-size:14px">'+esc(x.law)+'</div>'+((x.reasoning||"").trim()?'<p class="sub" style="margin-top:4px;font-size:13px"><b>推理：</b>'+esc(x.reasoning)+'</p>':'');
+        (x.obligations||[]).forEach(o=>{const map={verified:["good","逐字查到 ✓"],not_found:["crit","未在原文找到（已从结论剔除）"],unreachable:["caution","法源抓取失败"],no_quote:["neutral","无引文"],skipped:["neutral","未校验"]};const st=map[o.verify_status]||["neutral",o.verify_status||""];
+          h.appendChild(el("p","metaline",pill(st[0],st[1])+' '+esc(o.citation||"")+(o.quote?' · “'+esc(String(o.quote).slice(0,90))+'”':"")));});sb.appendChild(h);});
+      sub.appendChild(sb);b.appendChild(sub);}
+    d.appendChild(b);return d;
+  }
+
+  function chatCard(){
+    chatHistory=[];
+    const s=el("section","card chat"); s.innerHTML='<p class="eyebrow">接着问 AI</p>'
+      +'<p class="sub" style="margin-bottom:12px">对上面的结论有疑问就直接问，例如“为什么商业用途要授权？”“如果我把数据去标识化了呢？”</p><div class="msgs" id="chatMsgs"></div>';
+    const r=el("div","chatrow");
+    r.innerHTML='<textarea id="chatIn" placeholder="输入你的问题…（⌘/Ctrl + Enter 发送）"></textarea><button class="btn" id="chatSend">发送</button>';
+    s.appendChild(r);
+    setTimeout(()=>{$("#chatSend").onclick=sendChat;$("#chatIn").addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key==="Enter")sendChat();});},0);
+    return s;
+  }
+  function addMsg(cls,text){const m=el("div","msg "+cls);m.textContent=text;$("#chatMsgs").appendChild(m);return m;}
+  function sendChat(){
+    const ta=$("#chatIn"),btn=$("#chatSend"),q=(ta.value||"").trim();if(!q)return;
+    ta.value="";btn.disabled=true;addMsg("user",q);chatHistory.push({role:"user",content:q});
+    const think=addMsg("ai think","正在思考…");
+    fetch("/api/datause/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({context:lastContext,history:chatHistory.slice(0,-1),question:q})})
+      .then(async r=>{const j=await r.json();if(!r.ok)throw new Error(j.detail||("HTTP "+r.status));return j;})
+      .then(j=>{think.className="msg ai";think.textContent=j.answer||"（没有回复）";chatHistory.push({role:"assistant",content:j.answer||""});})
+      .catch(e=>{think.className="msg ai";think.innerHTML='<span class="err">出错：'+esc(e.message)+'</span>';})
+      .finally(()=>{btn.disabled=false;think.scrollIntoView({block:"nearest"});});
+  }
+
+  const modal=$("#modal");
+  $("#setBtn").onclick=()=>fetch("/api/settings").then(r=>r.json()).then(s=>{
+    const sel=$("#sProvider");sel.innerHTML="";(s.providers||[]).forEach(p=>{const o=el("option");o.value=p.id;o.textContent=p.label;sel.appendChild(o);});
+    const b=s.backend||{};sel.value=b.provider||"deepseek";$("#sEndpoint").value=b.endpoint||"";$("#sModel").value=b.model||"";
+    $("#sKey").value="";$("#sKey").placeholder=b.has_key?("已保存 "+(b.key_hint||"••••")):"输入 API key";$("#sMsg").textContent="";modal.classList.add("on");});
+  $("#sClose").onclick=()=>modal.classList.remove("on");
+  modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("on");});
+  $("#sSave").onclick=()=>{const body=new URLSearchParams({provider:$("#sProvider").value,endpoint:$("#sEndpoint").value,model:$("#sModel").value,api_key:$("#sKey").value});
+    fetch("/api/settings",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body}).then(r=>r.json()).then(()=>{$("#sMsg").textContent="已保存。";$("#sKey").value="";}).catch(e=>{$("#sMsg").innerHTML='<span class="err">保存失败：'+esc(e.message)+'</span>';});};
+  $("#sTest").onclick=()=>{$("#sMsg").textContent="测试中……";fetch("/api/test_connection",{method:"POST"}).then(r=>r.json()).then(d=>{$("#sMsg").innerHTML=d.ok?'连接成功 · 回复：'+esc(String(d.sample||"").slice(0,30)):'<span class="err">失败：'+esc(d.error||"")+'</span>';});};
+})();
+</script>
+</body>
+</html>
