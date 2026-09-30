@@ -199,7 +199,7 @@ When a user runs any of the following features:
 * Validation
 * Fact Review
 
-the app sends relevant **user-provided scenario text and structured facts** to the configured model-service endpoint.
+The app sends relevant **user-provided scenario text and structured facts** to the configured model-service endpoint.
 
 The following settings are controlled by the user through **Settings** or environment variables:
 
