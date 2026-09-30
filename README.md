@@ -122,3 +122,54 @@ python -m pytest app/tests
 ```
 
 Tests use FastAPI's `TestClient` and need no network access or real API key.
+
+# Security & Privacy Policy
+
+**Supported Version:** `v0.1.0-alpha.1`
+
+This repository is currently prepared as **v0.1.0-alpha.1**. The alpha build is intended for review and testing before a broader release.
+
+## Security Policy
+
+### API Keys
+
+The app **must not ship with a model-service API key**.
+
+Users provide their own API key through:
+
+* **Settings**
+* **Environment variables**
+
+Saved API keys are stored locally. The **Settings** panel also provides:
+
+* **Test Connection** — verifies the configured model-service connection.
+* **Clear Saved Key** — removes the locally saved API key.
+
+### Release Staging
+
+Before publishing a release, run the release staging script and inspect the generated:
+
+```text
+release/github/
+```
+
+directory.
+
+**Do not upload the full workspace.** Only intended release files should be published.
+
+### Reporting Security Issues
+
+If this repository is published on GitHub, security vulnerabilities should be reported through **GitHub Security Advisories** when available.
+
+If Security Advisories are not enabled, open a **minimal GitHub issue** that does not include:
+
+* Exploit details
+* Private credentials
+* Other sensitive security information
+
+## Release Checks
+
+The CI workflow runs tests and basic release-hygiene checks.
+
+Before publishing a release, a maintainer should also verify that the staged `release/github/` directory does
+
