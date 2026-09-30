@@ -133,7 +133,7 @@ This repository is currently prepared as **v0.1.0-alpha.1**. The alpha build is 
 
 ### API Keys
 
-The app **must not ship with a model-service API key**.
+The app **does not ship with a model-service API key**.
 
 Users provide their own API key through:
 
