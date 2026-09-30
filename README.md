@@ -171,5 +171,84 @@ If Security Advisories are not enabled, open a **minimal GitHub issue** that doe
 
 The CI workflow runs tests and basic release-hygiene checks.
 
-Before publishing a release, a maintainer should also verify that the staged `release/github/` directory does
+Before publishing a release, a maintainer should also verify that the staged `release/github/` directory does **not** contain:
+
+* API keys or bearer tokens
+* Local configuration files
+* `.pytest_cache`
+* `__pycache__`
+* `.DS_Store`
+* Playwright logs
+* Screenshots or task notes that are not intended for release
+
+A release should contain only the files necessary for the published application and documentation.
+
+---
+
+# Privacy Notes
+
+Data Boundary is designed as a **local-first desktop and localhost web application**.
+
+## Data Sent to Model Providers
+
+When a user runs any of the following features:
+
+* Fact extraction
+* Assessment narration
+* Source discovery
+* Validation
+* Fact Review
+
+the app sends relevant **user-provided scenario text and structured facts** to the configured model-service endpoint.
+
+The following settings are controlled by the user through **Settings** or environment variables:
+
+* Provider
+* Endpoint
+* Model
+* API key
+
+Users should review these settings before sending potentially sensitive information.
+
+## Local Storage
+
+The app may store model-service settings in the user's local configuration directory.
+
+The API key:
+
+* Is stored locally
+* Is masked in the user interface
+* Can be cleared from **Settings**
+
+## Telemetry
+
+This project does **not** include product telemetry or analytics.
+
+Local development logs and browser-automation traces may exist in a developer workspace, but these files are excluded from the release staging directory.
+
+## Legal Assessment Data
+
+Assessment inputs and outputs may contain sensitive:
+
+* Business information
+* Legal information
+* Personal data
+
+Users should **avoid entering confidential material** unless the configured model-service endpoint and applicable organizational policies permit that information to be processed.
+
+---
+
+## Release Checklist
+
+Before publishing a release, confirm that:
+
+* [ ] No model-service API key is included in the repository or release files.
+* [ ] The release staging script has been run.
+* [ ] `release/github/` has been inspected.
+* [ ] No local configuration files are included.
+* [ ] No cache or development artifacts are included.
+* [ ] No unintended screenshots or task notes are included.
+* [ ] Tests and CI release-hygiene checks pass.
+* [ ] Security-sensitive information has been removed from staged files.
+
 
