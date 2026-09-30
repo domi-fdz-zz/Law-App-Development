@@ -10,11 +10,11 @@ Current version: `0.1.0-alpha.1`
 
 ## Design principles
 
-- **Rules decide the verdict, not the model.** The LLM only assists with fact extraction, narration, source discovery, and report-grounded Q&A. Applicability and the final verdict come from deterministic logic in `privacy/gate.py`.
-- **Human in the loop.** Extracted facts are shown as an editable card; the assessment runs only on facts the user has confirmed or corrected.
-- **Quotes must be verifiable.** Every statutory quote the model produces is checked verbatim against an official primary source (allowlisted government / legislature domains). Quotes that cannot be verified are dropped.
-- **"Unknown" is first-class.** Missing critical facts yield `insufficient`, never a default pass.
-- **Keys stay local.** The API key is stored with `0600` permissions in `~/.config/data-boundary/config.json` and is never returned to the browser (only a masked hint).
+- **Output response is based on determinsitic logic.** The LLM only assists with fact extraction, narration, source discovery, and report-grounded Q&A. Applicability and the final verdict come from deterministic logic in `privacy/gate.py`.
+- **User input.** Extracted facts are shown as an editable card; the assessment runs only on facts the user has confirmed or corrected.
+- **Quotes must be verifiable.** Every statutory quote the model produces is checked verbatim against an official primary source (allow listed government / legislature domains). Quotes that cannot be verified are dropped.
+- **Model returns "Unknown" if answer is not known.** Missing critical facts yield `insufficient`, never a default pass.
+- **Keys stay local.** The API key is stored with `0600` permissions in `~/.config/data-boundary/config.json` and is never returned to the browser. API Keys are masked locally. 
 
 ## How it works
 
@@ -28,7 +28,7 @@ User confirms / edits the fact card
    │             + per-purpose verdict (research / commercial)
    ├─ retrieve   for each applicable law: reasoning + obligations, with citation,
    │             verbatim quote, and official source URL
-   ├─ case-scan  case-specific deep scan that can surface authorities beyond the modeled set
+   ├─ case-scan  case-specific deep scan that can review credible sources beyond the modeled set
    ├─ verify     fetch official sources and confirm each quote verbatim
    └─ narrate    case-specific explanation (cannot change the rule-decided verdict)
    ▼
@@ -67,7 +67,7 @@ HIPAA, the Common Rule, FDA human-subjects regulations, GINA, FTC Act §5, COPPA
 
 ## Installation and running
 
-Requires Python 3.11+. The code imports itself as the package `app` (e.g. `from app.main import app`), so clone into a directory named `app`:
+Requires Python 3.11+. The code below creates the package `app` (e.g. `from app.main import app`), so clone it into a directory named `app`:
 
 ```bash
 git clone https://github.com/domi-fdz-zz/Law-App-Development.git app
